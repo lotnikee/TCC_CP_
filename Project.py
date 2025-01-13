@@ -12,18 +12,18 @@ orbitals = {
     "2s": lambda r: (2 - r) * np.exp(-r/2),
     "2p": lambda r: (6 - (6 * r) + (r ** 2)) * np.exp(-r/2)}
 
-# Function to compute RDF given a wavefunction
+# Function to compute the RDFs
 def compute_rdf(wavefunc, r, radial_factor):
     return radial_factor * (wavefunc(r) ** 2)
 
-# Function to normalize RDF so that its maximum value is 1
+# Function to normalise the RDFs so that its maximum value is 1
 def normalize_max(rdf):
     return rdf / np.max(rdf)
 
-# Dictionaries to store results
+# Store the results of the normalised RDFs in a dictionary
 rdf_normalized_max = {}
 
-# Run a for loop to compute the RDF and run the normalisation. 
+# Run a for loop to compute the RDFs and their normalisation 
 for name, wavefunc in orbitals.items():
     rdf = compute_rdf(wavefunc, r, radial_factor)
     rdf_normalized_max[name] = normalize_max(rdf)
@@ -34,6 +34,7 @@ additional_orbitals = {
     "3d": lambda r: (r ** 2) * np.exp(-r/2)} 
 orbitals.update(additional_orbitals)
 
+# Run the for loop again to compute all the RDFs (including 3p and 3d) and their normalisation
 for name, wavefunc in orbitals.items():
     rdf = compute_rdf(wavefunc, r, radial_factor)
     rdf_normalized_max[name] = normalize_max(rdf)
