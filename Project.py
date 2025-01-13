@@ -1,130 +1,132 @@
-# Calculate the radial distribution function (RDF) for 1s, 2s and 2p orbitals,
-# and then normalise the result so the maximum value of each RDF is one. 
-# The RDF is 4*π*r^2 times the square of the wavefunction. 
-# The (unnormalised) wavefunctions themselves are given by: 
-    
-    # phi_1s = e^(-r/2)
-    # phi_2s = (2-r)e^(-r/2)
-    # phi_2p = (6-6r+r^2)e^(-r/2)
-    # phi_3p = (4r - r^2)e^(-r/2)
-    # phi_3d = r^2e^(-r/2)
-    
-# Import the different modules used in this project
 import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Define a range for the radius
+# Define a radius range and a radial factor 
 r = np.arange(0, 20.0, 0.05)
+radial_factor = 4 * math.pi * (r ** 2)
 
-# Define the RDF for 1s, 2s and 2p orbitals
-def RDF_1s(r):
-    phi_1s = np.exp(-r/2)
-    return (4 * math.pi * (r**2)) * (phi_1s ** 2)
+# Define the wavefunctions for the different orbitals in a dictionary
+orbitals = {
+    "1s": lambda r: np.exp(-r/2),
+    "2s": lambda r: (2 - r) * np.exp(-r/2),
+    "2p": lambda r: (6 - (6 * r) + (r ** 2)) * np.exp(-r/2)}
 
-def RDF_2s(r):
-    phi_2s = (2-r) * np.exp(-r/2)
-    return (4 * math.pi * (r**2)) * (phi_2s ** 2)
+# Function to compute RDF given a wavefunction
+def compute_rdf(wavefunc, r, radial_factor):
+    return radial_factor * (wavefunc(r) ** 2)
 
-def RDF_2p(r):
-    phi_2p = (6 - (6*r) + (r**2)) * np.exp(-r/2)
-    return  (4 * math.pi * (r**2)) * (phi_2p ** 2)
+# Function to normalize RDF so that its maximum value is 1
+def normalize_max(rdf):
+    return rdf / np.max(rdf)
 
-# Normalise the RDFs for the different orbitals so the maximum peak value is 1
-RDF_normalised_1s = RDF_1s(r) / np.max(RDF_1s(r))
-RDF_normalised_2s = RDF_2s(r) / np.max(RDF_2s(r))
-RDF_normalised_2p = RDF_2p(r) / np.max(RDF_2p(r))
+# Dictionaries to store results
+rdf_normalized_max = {}
 
-# Define the RDF for the 3p and 3d orbitals 
-def RDF_3p(r): 
-    phi_3p = ((4 * r) - (r**2)) * np.exp(-r/2)
-    return (4 * math.pi * (r**2)) * (phi_3p ** 2)
+# Run a for loop to compute the RDF and run the normalisation. 
+for name, wavefunc in orbitals.items():
+    rdf = compute_rdf(wavefunc, r, radial_factor)
+    rdf_normalized_max[name] = normalize_max(rdf)
+        
+# Append the orbitals dictionary to include the additional 3p and 3d orbital 
+additional_orbitals = {
+    "3p": lambda r: ((4 * r) - (r ** 2)) * np.exp(-r/2),
+    "3d": lambda r: (r ** 2) * np.exp(-r/2)} 
+orbitals.update(additional_orbitals)
 
-def RDF_3d(r):
-    phi_3d = (r**2) * np.exp(-r/2)
-    return (4 * math.pi * (r**2)) * (phi_3d ** 2)
+for name, wavefunc in orbitals.items():
+    rdf = compute_rdf(wavefunc, r, radial_factor)
+    rdf_normalized_max[name] = normalize_max(rdf)
+    
+# Function to perform Simpson's rule integration
+def simpsons_rule(func, a, b, n):
+    if n % 2 != 0:
+        raise ValueError("Number of intervals (n) must be even for Simpson's rule.")
+    h = (b - a) / n
+    x = np.linspace(a, b, n + 1)
+    y = func(x)
+    integral = y[0] + y[-1] + 4 * np.sum(y[1:-1:2]) + 2 * np.sum(y[2:-2:2])
+    integral *= h / 3
+    return integral
 
-# Normalise the RDF for the 3p and 3d orbitals 
-RDF_normalised_3p = RDF_3p(r) / np.max(RDF_3p(r))
-RDF_normalised_3d = RDF_3d(r) / np.max(RDF_3d(r))
+# Function to perform Trapezoidal rule integration
+def trapezoidal_rule(func, a, b, n):
+    h = (b - a) / n
+    x = np.linspace(a, b, n + 1)
+    y = func(x)
+    integral = h * (np.sum(y) - 0.5 * (y[0] + y[-1]))
+    return integral
 
-# Plot the normalised RDF for all the orbitals
-plt.figure(figsize=(10,8))
-plt.xlabel("Radius in Å")
-plt.ylabel("Radial Distribution Function")
-plt.title("Normalised Radial Distribution Functions")
-plt.plot(r, RDF_normalised_1s, label="1s", color="blue", linestyle="-", linewidth=2)
-plt.plot(r, RDF_normalised_2s, label="2s", color="green", linestyle="-", linewidth=2)
-plt.plot(r, RDF_normalised_2p, label="2p", color="red", linestyle="-", linewidth=2)
-plt.plot(r, RDF_normalised_3p, label="3p", color="purple", linestyle="-", linewidth=2)
-plt.plot(r, RDF_normalised_3d, label="3d", color="pink", linestyle="-", linewidth=2)
-plt.legend(loc="upper right")
-plt.grid(True)
-plt.show()
-
-# The following code is written to numerically integrate the respective RDFs. 
-# Set variables for minimum, maximum and number of intervals used in Simpson's rule
-a = 0 
+# Integration parameters
+a = 0
 b = 20
 n = 1000
 
-# Define functions to integrate orbitals using Simpson's rule 
-def simpsons_rule(func, a, b, n):
+# Dictionaries to store results
+rdf_normalized_integral = {}
+normalization_constants = {}
+rdf_normalized_integral_norm = {}
+
+for name, wavefunc in orbitals.items():
+    rdf = compute_rdf(wavefunc, r, radial_factor)
+    rdf_normalized_max[name] = normalize_max(rdf)
     
-    if n % 2 != 0:
-        raise ValueError ("Number of intervals (n) must be even for Simpson's rule.")
+    # Define a function for integration (RDF)
+    def rdf_func(x, wf=wavefunc):
+        return compute_rdf(wf, x, 4 * math.pi * (x ** 2))
     
-    h = (b-a) / n
-    x = np.linspace(a, b, n + 1)
-    y = func(x)
+    # Integrate using Simpson's rule
+    integral_simpson = simpsons_rule(rdf_func, a, b, n)
     
-    integral = y[0] + y[-1]
-    integral += 4*sum(y[1:-1:2])
-    integral += 2*sum(y[2:-2:2])
-    integral *= h/3
+    # Integrate using Trapezoidal rule
+    integral_trap = trapezoidal_rule(rdf_func, a, b, n)
+    
+    # Compute normalization constant using Trapezoidal integral
+    normalization_constants[name] = 1 / integral_trap
+    
+    # Store normalized RDF where integral equals 1
+    rdf_normalized_integral[name] = normalization_constants[name] * rdf
 
-    return integral 
+# Print Integration Results
+print("Integration Results using Simpson's Rule:")
+for name, wavefunc in orbitals.items():
+    integral_simpson = simpsons_rule(
+        lambda x: compute_rdf(wavefunc, x, 4 * math.pi * (x ** 2)),
+        a, b, n)
+    print(f"Integral of {name} orbital: {integral_simpson:.5f}")
 
-result_1s = simpsons_rule(RDF_1s, a, b, n)
-result_2s = simpsons_rule(RDF_2s, a, b, n)
-result_2p = simpsons_rule(RDF_2p, a, b, n)
-result_3p = simpsons_rule(RDF_3p, a, b, n)
-result_3d = simpsons_rule(RDF_3d, a, b, n)
+print("\nIntegration Results using Trapezoidal Rule:")
+for name, wavefunc in orbitals.items():
+    integral_trap = trapezoidal_rule(
+        lambda x: compute_rdf(wavefunc, x, 4 * math.pi * (x ** 2)),
+        a, b, n)
+    print(f"Integral of {name} orbital: {integral_trap:.5f}")
 
-print("Integral of 1s orbital using Simpson's rule is:", result_1s)
-print("Integral of 2s orbital using Simpson's rule is:", result_2s)
-print("Integral of 2p orbital using Simpson's rule is:", result_2p)
-print("Integral of 3p orbital using Simpson's rule is:", result_3p)
-print("Integral of 3d orbital using Simpson's rule is:", result_3d, "\n")
+# Print Normalization Constants
+print("\nNormalization Constants (1 / Trapezoidal Integral):")
+for name, constant in normalization_constants.items():
+    print(f"Normalization constant for {name} orbital: {constant:.5f}")
 
-# Define function to integrate orbitals using Trapezoidal Rule
-def trapezoidal_rule(func, a, b, n):
-    h = (b-a)/n
-    x = np.linspace(a,b,n+1)
-    y = func(x)
-    return h*(np.sum(y) - 0.5*(y[0]+y[-1]))
+# Create subplots: 1 row, 2 columns
+fig, axs = plt.subplots(1, 2, figsize=(18, 8))
 
-result_trap_1s = trapezoidal_rule(RDF_1s, a, b, n)
-result_trap_2s = trapezoidal_rule(RDF_2s, a, b, n)
-result_trap_2p = trapezoidal_rule(RDF_2p, a, b, n)
-result_trap_3p = trapezoidal_rule(RDF_3p, a, b, n)
-result_trap_3d = trapezoidal_rule(RDF_3d, a, b, n)
+# First subplot: Max Normalized RDFs
+for name, rdf in rdf_normalized_max.items():
+    axs[0].plot(r, rdf, label=name, linewidth=2)
+axs[0].set_xlabel("Radius in Å")
+axs[0].set_ylabel("Radial Distribution Function")
+axs[0].set_title("RDFs Normalized by Maximum Value")
+axs[0].legend()
+axs[0].grid(True)
 
-print("Integral of 1s orbital using trapezoidal rule is:", result_trap_1s)
-print("Integral of 2s orbital using trapezoidal rule is:", result_trap_2s)
-print("Integral of 2p orbital using trapezoidal rule is", result_trap_2p)
-print("Integral of 3p orbital using trapezoidal rule is", result_trap_3p)
-print("Integral of 3d orbital using trapezoidal rule is", result_trap_3d, "\n")
+# Second subplot: Integral Normalized RDFs
+for name, rdf in rdf_normalized_integral.items():
+    axs[1].plot(r, rdf, label=name, linewidth=2)
+axs[1].set_xlabel("Radius in Å")
+axs[1].set_ylabel("Radial Distribution Function")
+axs[1].set_title("RDFs Normalized by Integral")
+axs[1].legend()
+axs[1].grid(True)
 
-# Compute the normalisation constants for the different orbitals
-normal_c_1s = 1 / result_trap_1s
-normal_c_2s = 1 / result_trap_2s
-normal_c_2p = 1 / result_trap_2p
-normal_c_3p = 1 / result_trap_3p
-normal_c_3d = 1 / result_trap_3d
-
-print("Normalisation constant for a 1s orbital is:", normal_c_1s)
-print("Normalisation constant for a 2s orbital is:", normal_c_2s)
-print("Normalisation constant for a 2p orbital is:", normal_c_2p)
-print("Normalisation constant for a 3p orbital is:", normal_c_3p)
-print("Normalisation constant for a 3d orbital is:", normal_c_3d)
+plt.tight_layout()
+plt.show()
