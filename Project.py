@@ -17,16 +17,16 @@ def compute_rdf(wavefunc, r, radial_factor):
     return radial_factor * (wavefunc(r) ** 2)
 
 # Function to normalise the RDFs so that its maximum value is 1
-def normalize_max(rdf):
+def normalise_max(rdf):
     return rdf / np.max(rdf)
 
 # Store the results of the normalised RDFs in a dictionary
-rdf_normalized_max = {}
+rdf_normalised_max = {}
 
 # Run a for loop to compute the RDFs and their normalisation 
 for name, wavefunc in orbitals.items():
     rdf = compute_rdf(wavefunc, r, radial_factor)
-    rdf_normalized_max[name] = normalize_max(rdf)
+    rdf_normalised_max[name] = normalise_max(rdf)
         
 # Append the orbitals dictionary to include the additional 3p and 3d orbital 
 additional_orbitals = {
@@ -37,7 +37,7 @@ orbitals.update(additional_orbitals)
 # Run the for loop again to compute all the RDFs (including 3p and 3d) and their normalisation
 for name, wavefunc in orbitals.items():
     rdf = compute_rdf(wavefunc, r, radial_factor)
-    rdf_normalized_max[name] = normalize_max(rdf)
+    rdf_normalised_max[name] = normalise_max(rdf)
     
 # Function to perform Simpson's rule integration
 def simpsons_rule(func, a, b, n):
@@ -64,13 +64,13 @@ b = 20
 n = 1000
 
 # Dictionaries to store results
-rdf_normalized_integral = {}
-normalization_constants = {}
-rdf_normalized_integral_norm = {}
+rdf_normalised_integral = {}
+normalisation_constants = {}
+rdf_normalised_integral_norm = {}
 
 for name, wavefunc in orbitals.items():
     rdf = compute_rdf(wavefunc, r, radial_factor)
-    rdf_normalized_max[name] = normalize_max(rdf)
+    rdf_normalised_max[name] = normalise_max(rdf)
     
     # Define a function for integration (RDF)
     def rdf_func(x, wf=wavefunc):
@@ -82,11 +82,11 @@ for name, wavefunc in orbitals.items():
     # Integrate using Trapezoidal rule
     integral_trap = trapezoidal_rule(rdf_func, a, b, n)
     
-    # Compute normalization constant using Trapezoidal integral
-    normalization_constants[name] = 1 / integral_trap
+    # Compute normalisation constant using Trapezoidal integral
+    normalisation_constants[name] = 1 / integral_trap
     
-    # Store normalized RDF where integral equals 1
-    rdf_normalized_integral[name] = normalization_constants[name] * rdf
+    # Store normalised RDF where integral equals 1
+    rdf_normalised_integral[name] = normalisation_constants[name] * rdf
 
 # Print Integration Results
 print("Integration Results using Simpson's Rule:")
@@ -103,29 +103,29 @@ for name, wavefunc in orbitals.items():
         a, b, n)
     print(f"Integral of {name} orbital: {integral_trap:.5f}")
 
-# Print Normalization Constants
-print("\nNormalization Constants (1 / Trapezoidal Integral):")
-for name, constant in normalization_constants.items():
-    print(f"Normalization constant for {name} orbital: {constant:.5f}")
+# Print normalisation constants
+print("\nNormalisation Constants (1 / Trapezoidal Integral):")
+for name, constant in normalisation_constants.items():
+    print(f"Normalisation constant for {name} orbital: {constant:.5f}")
 
 # Create subplots: 1 row, 2 columns
 fig, axs = plt.subplots(1, 2, figsize=(18, 8))
 
-# First subplot: Max Normalized RDFs
-for name, rdf in rdf_normalized_max.items():
+# First subplot: Max Normalised RDFs
+for name, rdf in rdf_normalised_max.items():
     axs[0].plot(r, rdf, label=name, linewidth=2)
 axs[0].set_xlabel("Radius in Å")
 axs[0].set_ylabel("Radial Distribution Function")
-axs[0].set_title("RDFs Normalized by Maximum Value")
+axs[0].set_title("RDFs Normalised by Maximum Value")
 axs[0].legend()
 axs[0].grid(True)
 
-# Second subplot: Integral Normalized RDFs
-for name, rdf in rdf_normalized_integral.items():
+# Second subplot: Integral Normalised RDFs
+for name, rdf in rdf_normalised_integral.items():
     axs[1].plot(r, rdf, label=name, linewidth=2)
 axs[1].set_xlabel("Radius in Å")
 axs[1].set_ylabel("Radial Distribution Function")
-axs[1].set_title("RDFs Normalized by Integral")
+axs[1].set_title("RDFs Normalised by Integral")
 axs[1].legend()
 axs[1].grid(True)
 
