@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Define a radius range and a radial factor 
-r = np.arange(0, 20.0, 0.05)
+r = np.arange(0, 30.0, 0.05)
 radial_factor = 4 * math.pi * (r ** 2)
 
 # Define the wavefunctions for the different orbitals in a dictionary
@@ -50,8 +50,8 @@ def simpsons_rule(func, a, b, n):
     integral *= h / 3
     return integral
 
-# Function to perform Trapezoidal rule integration
-def trapezoidal_rule(func, a, b, n):
+# Function to perform Trapezium rule integration
+def trapezium_rule(func, a, b, n):
     h = (b - a) / n
     x = np.linspace(a, b, n + 1)
     y = func(x)
@@ -60,7 +60,7 @@ def trapezoidal_rule(func, a, b, n):
 
 # Integration parameters
 a = 0
-b = 20
+b = 30
 n = 1000
 
 # Dictionaries to store results
@@ -79,10 +79,10 @@ for name, wavefunc in orbitals.items():
     # Integrate using Simpson's rule
     integral_simpson = simpsons_rule(rdf_func, a, b, n)
     
-    # Integrate using Trapezoidal rule
-    integral_trap = trapezoidal_rule(rdf_func, a, b, n)
+    # Integrate using Trapezium rule
+    integral_trap = trapezium_rule(rdf_func, a, b, n)
     
-    # Compute normalisation constant using Trapezoidal integral
+    # Compute normalisation constant using Trapezium integral
     normalisation_constants[name] = 1 / integral_trap
     
     # Store normalised RDF where integral equals 1
@@ -96,15 +96,15 @@ for name, wavefunc in orbitals.items():
         a, b, n)
     print(f"Integral of {name} orbital: {integral_simpson:.5f}")
 
-print("\nIntegration Results using Trapezoidal Rule:")
+print("\nIntegration Results using Trapezium Rule:")
 for name, wavefunc in orbitals.items():
-    integral_trap = trapezoidal_rule(
+    integral_trap = trapezium_rule(
         lambda x: compute_rdf(wavefunc, x, 4 * math.pi * (x ** 2)),
         a, b, n)
     print(f"Integral of {name} orbital: {integral_trap:.5f}")
 
 # Print normalisation constants
-print("\nNormalisation Constants (1 / Trapezoidal Integral):")
+print("\nNormalisation Constants (1 / Trapezium Integral):")
 for name, constant in normalisation_constants.items():
     print(f"Normalisation constant for {name} orbital: {constant:.5f}")
 
